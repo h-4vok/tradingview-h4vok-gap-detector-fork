@@ -1,0 +1,100 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Asch-
+
+//@version=6
+indicator(title = 'GAP DETECTOR - h4vok Final', overlay = true, max_bars_back = 3000)
+
+length = input.int(1500, minval = 1, maxval = 3000, title = 'Bars to Look Back')
+width = input.int(2, minval = 1, maxval = 5, title = 'Line Width')
+
+if barstate.islast
+
+    // --- Enhanced Debugging Variables ---
+    string gap_type_rt = 'None Detected'
+    string top_line_coords = 'N/A'
+    string bottom_line_coords = 'N/A'
+
+
+// --- PART 1: Real-Time Gap Check (Today vs Yesterday) ---
+
+    // Check for a Bullish (Up) Gap
+    if low[0] > high[1]
+        float inf_gap_rt = high[1]
+        float sup_gap_rt = low[0]
+        if (sup_gap_rt - inf_gap_rt) / (syminfo.mintick * 10) >= 5
+            // <<< CORRECTION HERE: x2 is now bar_index + 1 to define a non-zero length
+            line.new(x1 = bar_index, y1 = sup_gap_rt, x2 = bar_index + 1, y2 = sup_gap_rt, extend = extend.right, color = color.aqua, style = line.style_solid, width = width)
+            line.new(x1 = bar_index[1], y1 = inf_gap_rt, x2 = bar_index, y2 = inf_gap_rt, extend = extend.right, color = color.aqua, style = line.style_solid, width = width)
+
+            gap_type_rt := 'Bullish'
+            top_line_coords := '(' + str.tostring(bar_index) + ', ' + str.tostring(sup_gap_rt) + ')'
+            bottom_line_coords := '(' + str.tostring(bar_index[1]) + ', ' + str.tostring(inf_gap_rt) + ')'
+            bottom_line_coords
+
+    // Check for a Bearish (Down) Gap
+    if high[0] < low[1]
+        float inf_gap_rt = high[0]
+        float sup_gap_rt = low[1]
+        if (sup_gap_rt - inf_gap_rt) / (syminfo.mintick * 10) >= 5
+            line.new(x1 = bar_index[1], y1 = sup_gap_rt, x2 = bar_index, y2 = sup_gap_rt, extend = extend.right, color = color.red, style = line.style_solid, width = width)
+            // <<< CORRECTION HERE: x2 is now bar_index + 1 to define a non-zero length
+            line.new(x1 = bar_index, y1 = inf_gap_rt, x2 = bar_index + 1, y2 = inf_gap_rt, extend = extend.right, color = color.red, style = line.style_solid, width = width)
+
+            gap_type_rt := 'Bearish'
+            top_line_coords := '(' + str.tostring(bar_index[1]) + ', ' + str.tostring(sup_gap_rt) + ')'
+            bottom_line_coords := '(' + str.tostring(bar_index) + ', ' + str.tostring(inf_gap_rt) + ')'
+            bottom_line_coords
+
+
+    // =================== START: Temporary Debug Label ===================
+    var label debugLabel = na
+    label.delete(debugLabel)
+
+    string debugText = '--- Real-Time Gap ---\n' + 'Gap Type: ' + gap_type_rt + '\n' + 'Top Line (x1, y1): ' + top_line_coords + '\n' + 'Bottom Line (x1, y1): ' + bottom_line_coords
+
+    debugLabel := label.new(bar_index, high, text = debugText, color = color.new(color.yellow, 20), textcolor = color.black, style = label.style_label_down, yloc = yloc.price, textalign = text.align_left)
+    // ==================== END: Temporary Debug Label ====================
+
+
+    // --- PART 2: Historical Gaps Check (Yesterday and Older) ---
+    for j = 2 to length by 1
+        bool gap_bull = false
+        bool gap_bear = false
+        float inf_gap = 0.0
+        float sup_gap = 0.0
+
+        // Bearish (Down) Gap Logic
+        if high[j] < low[j - 1]
+            gap_start = high[j]
+            gap_end = low[j - 1]
+            gap_bear := true
+            inf_gap := gap_start
+            sup_gap := gap_end
+            for i = j - 1 to 0 by 1
+                sup_gap := math.min(sup_gap, low[i])
+                sup_gap
+            if (sup_gap - inf_gap) / (syminfo.mintick * 10) < 5
+                gap_bear := false
+                gap_bear
+
+        // Bullish (Up) Gap Logic
+        if low[j] > high[j - 1]
+            gap_start = low[j]
+            gap_end = high[j - 1]
+            gap_bull := true
+            inf_gap := gap_end
+            sup_gap := gap_start
+            for i = j - 1 to 0 by 1
+                inf_gap := math.max(inf_gap, high[i])
+                inf_gap
+            if (sup_gap - inf_gap) / (syminfo.mintick * 10) < 5
+                gap_bull := false
+                gap_bull
+
+        if gap_bear
+            line.new(x1 = bar_index[j], y1 = inf_gap, x2 = bar_index, y2 = inf_gap, extend = extend.right, color = color.red, style = line.style_solid, width = width)
+            line.new(x1 = bar_index[j - 1], y1 = sup_gap, x2 = bar_index, y2 = sup_gap, extend = extend.right, color = color.red, style = line.style_solid, width = width)
+
+        if gap_bull
+            line.new(x1 = bar_index[j - 1], y1 = inf_gap, x2 = bar_index, y2 = inf_gap, extend = extend.right, color = color.aqua, style = line.style_solid, width = width)
+            line.new(x1 = bar_index[j], y1 = sup_gap, x2 = bar_index, y2 = sup_gap, extend = extend.right, color = color.aqua, style = line.style_solid, width = width)
