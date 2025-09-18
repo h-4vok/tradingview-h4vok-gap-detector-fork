@@ -26,3 +26,5 @@ This indicator is a fork of an existing script that has been systematically debu
 ## Adding in TradingView directly
 
 This indicator is not publicly available in tradingview as of now, as I want to properly address the original author of the script and give them the proper credit.
+
+However, you can find it through this link: https://www.tradingview.com/script/j02cVwFN-GAP-DETECTOR-h4vok-fork/
