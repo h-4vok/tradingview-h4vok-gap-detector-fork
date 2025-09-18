@@ -45,17 +45,6 @@ if barstate.islast
             bottom_line_coords := '(' + str.tostring(bar_index) + ', ' + str.tostring(inf_gap_rt) + ')'
             bottom_line_coords
 
-
-    // =================== START: Temporary Debug Label ===================
-    var label debugLabel = na
-    label.delete(debugLabel)
-
-    string debugText = '--- Real-Time Gap ---\n' + 'Gap Type: ' + gap_type_rt + '\n' + 'Top Line (x1, y1): ' + top_line_coords + '\n' + 'Bottom Line (x1, y1): ' + bottom_line_coords
-
-    debugLabel := label.new(bar_index, high, text = debugText, color = color.new(color.yellow, 20), textcolor = color.black, style = label.style_label_down, yloc = yloc.price, textalign = text.align_left)
-    // ==================== END: Temporary Debug Label ====================
-
-
     // --- PART 2: Historical Gaps Check (Yesterday and Older) ---
     for j = 2 to length by 1
         bool gap_bull = false
